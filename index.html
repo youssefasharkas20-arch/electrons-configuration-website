@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electron Configuration Tool</title>
+    <style>
+        /* CSS STYLES */
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f2027;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        header {
+            background: #1a237e;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        .subtitle {
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        .main {
+            padding: 30px;
+        }
+        .search-box {
+            background: #162447;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 12px;
+            width: 70%;
+            background: #0f3460;
+            border: 2px solid #3949ab;
+            color: white;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 12px 25px;
+            background: #3949ab;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #536dfe;
+        }
+        .examples {
+            margin-top: 15px;
+        }
+        .ex-btn {
+            margin: 0 5px;
+            padding: 8px 15px;
+            background: #1a237e;
+        }
+        .results {
+            background: #1f4068;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .config {
+            font-family: monospace;
+            font-size: 1.2em;
+            padding: 15px;
+            background: #0f3460;
+            border-radius: 5px;
+            margin-top: 10px;
+            min-height: 60px;
+        }
+        .element-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #162447;
+            color: #888;
+        }
+        .config-block {
+            display: inline-block;
+            margin: 5px;
+            padding: 5px 10px;
+            background: rgba(57,73,171,0.3);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⚛ Electron Configuration Tool</h1>
+            <p class="subtitle">Visualize electron configurations of elements</p>
+        </header>
+        
+        <div class="main">
+            <div class="search-box">
+                <input type="text" id="elementInput" placeholder="Enter element (H, Na, Fe, etc.)">
+                <button onclick="searchElement()">Get Configuration</button>
+                <div class="examples">
+                    <small>Try: </small>
+                    <button class="ex-btn" onclick="setExample('H')">H</button>
+                    <button class="ex-btn" onclick="setExample('Na')">Na</button>
+                    <button class="ex-btn" onclick="setExample('Fe')">Fe</button>
+                    <button class="ex-btn" onclick="setExample('Ag')">Ag</button>
+                </div>
+            </div>
+            
+            <div class="results">
+                <h3>Electron Configuration:</h3>
+                <div class="config" id="configDisplay">
+                    Enter an element above
+                </div>
+                
+                <div class="element-info" id="elementInfo">
+                    <!-- Element info will appear here -->
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Electron Configuration Tool • Created for Chemistry Education</p>
+        </footer>
+    </div>
+
+    <script>
+    // COMPLETE DATABASE OF ALL 118 ELEMENTS
+    const elements = {
+        'H': {name: 'Hydrogen', atomicNumber: 1, config: '1s¹', electrons: 1, category: 'nonmetal'},
+        'He': {name: 'Helium', atomicNumber: 2, config: '1s²', electrons: 2, category: 'noble gas'},
+        'Li': {name: 'Lithium', atomicNumber: 3, config: '1s² 2s¹', electrons: 3, category: 'alkali metal'},
+        'Be': {name: 'Beryllium', atomicNumber: 4, config: '1s² 2s²', electrons: 4, category: 'alkaline earth metal'},
+        'B': {name: 'Boron', atomicNumber: 5, config: '1s² 2s² 2p¹', electrons: 5, category: 'metalloid'},
+        'C': {name: 'Carbon', atomicNumber: 6, config: '1s² 2s² 2p²', electrons: 6, category: 'nonmetal'},
+        'N': {name: 'Nitrogen', atomicNumber: 7, config: '1s² 2s² 2p³', electrons: 7, category: 'nonmetal'},
+        'O': {name: 'Oxygen', atomicNumber: 8, config: '1s² 2s² 2p⁴', electrons: 8, category: 'nonmetal'},
+        'F': {name: 'Fluorine', atomicNumber: 9, config: '1s² 2s² 2p⁵', electrons: 9, category: 'halogen'},
+        'Ne': {name: 'Neon', atomicNumber: 10, config: '1s² 2s² 2p⁶', electrons: 10, category: 'noble gas'},
+        'Na': {name: 'Sodium', atomicNumber: 11, config: '1s² 2s² 2p⁶ 3s¹', electrons: 11, category: 'alkali metal'},
+        'Mg': {name: 'Magnesium', atomicNumber: 12, config: '1s² 2s² 2p⁶ 3s²', electrons: 12, category: 'alkaline earth metal'},
+        'Al': {name: 'Aluminum', atomicNumber: 13, config: '1s² 2s² 2p⁶ 3s² 3p¹', electrons: 13, category: 'post-transition metal'},
+        'Si': {name: 'Silicon', atomicNumber: 14, config: '1s² 2s² 2p⁶ 3s² 3p²', electrons: 14, category: 'metalloid'},
+        'P': {name: 'Phosphorus', atomicNumber: 15, config: '1s² 2s² 2p⁶ 3s² 3p³', electrons: 15, category: 'nonmetal'},
+        'S': {name: 'Sulfur', atomicNumber: 16, config: '1s² 2s² 2p⁶ 3s² 3p⁴', electrons: 16, category: 'nonmetal'},
+        'Cl': {name: 'Chlorine', atomicNumber: 17, config: '1s² 2s² 2p⁶ 3s² 3p⁵', electrons: 17, category: 'halogen'},
+        'Ar': {name: 'Argon', atomicNumber: 18, config: '1s² 2s² 2p⁶ 3s² 3p⁶', electrons: 18, category: 'noble gas'},
+        'K': {name: 'Potassium', atomicNumber: 19, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹', electrons: 19, category: 'alkali metal'},
+        'Ca': {name: 'Calcium', atomicNumber: 20, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s²', electrons: 20, category: 'alkaline earth metal'},
+        'Sc': {name: 'Scandium', atomicNumber: 21, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹', electrons: 21, category: 'transition metal'},
+        'Ti': {name: 'Titanium', atomicNumber: 22, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d²', electrons: 22, category: 'transition metal'},
+        'V': {name: 'Vanadium', atomicNumber: 23, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d³', electrons: 23, category: 'transition metal'},
+        'Cr': {name: 'Chromium', atomicNumber: 24, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d⁵', electrons: 24, category: 'transition metal'},
+        'Mn': {name: 'Manganese', atomicNumber: 25, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁵', electrons: 25, category: 'transition metal'},
+        'Fe': {name: 'Iron', atomicNumber: 26, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁶', electrons: 26, category: 'transition metal'},
+        'Co': {name: 'Cobalt', atomicNumber: 27, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁷', electrons: 27, category: 'transition metal'},
+        'Ni': {name: 'Nickel', atomicNumber: 28, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d⁸', electrons: 28, category: 'transition metal'},
+        'Cu': {name: 'Copper', atomicNumber: 29, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s¹ 3d¹⁰', electrons: 29, category: 'transition metal'},
+        'Zn': {name: 'Zinc', atomicNumber: 30, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰', electrons: 30, category: 'transition metal'},
+        'Ga': {name: 'Gallium', atomicNumber: 31, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p¹', electrons: 31, category: 'post-transition metal'},
+        'Ge': {name: 'Germanium', atomicNumber: 32, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p²', electrons: 32, category: 'metalloid'},
+        'As': {name: 'Arsenic', atomicNumber: 33, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p³', electrons: 33, category: 'metalloid'},
+        'Se': {name: 'Selenium', atomicNumber: 34, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁴', electrons: 34, category: 'nonmetal'},
+        'Br': {name: 'Bromine', atomicNumber: 35, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁵', electrons: 35, category: 'halogen'},
+        'Kr': {name: 'Krypton', atomicNumber: 36, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶', electrons: 36, category: 'noble gas'},
+        'Rb': {name: 'Rubidium', atomicNumber: 37, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹', electrons: 37, category: 'alkali metal'},
+        'Sr': {name: 'Strontium', atomicNumber: 38, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s²', electrons: 38, category: 'alkaline earth metal'},
+        'Y': {name: 'Yttrium', atomicNumber: 39, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹', electrons: 39, category: 'transition metal'},
+        'Zr': {name: 'Zirconium', atomicNumber: 40, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d²', electrons: 40, category: 'transition metal'},
+        'Nb': {name: 'Niobium', atomicNumber: 41, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹ 4d⁴', electrons: 41, category: 'transition metal'},
+        'Mo': {name: 'Molybdenum', atomicNumber: 42, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹ 4d⁵', electrons: 42, category: 'transition metal'},
+        'Tc': {name: 'Technetium', atomicNumber: 43, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d⁵', electrons: 43, category: 'transition metal'},
+        'Ru': {name: 'Ruthenium', atomicNumber: 44, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹ 4d⁷', electrons: 44, category: 'transition metal'},
+        'Rh': {name: 'Rhodium', atomicNumber: 45, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹ 4d⁸', electrons: 45, category: 'transition metal'},
+        'Pd': {name: 'Palladium', atomicNumber: 46, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 4d¹⁰', electrons: 46, category: 'transition metal'},
+        'Ag': {name: 'Silver', atomicNumber: 47, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s¹ 4d¹⁰', electrons: 47, category: 'transition metal'},
+        'Cd': {name: 'Cadmium', atomicNumber: 48, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰', electrons: 48, category: 'transition metal'},
+        'In': {name: 'Indium', atomicNumber: 49, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p¹', electrons: 49, category: 'post-transition metal'},
+        'Sn': {name: 'Tin', atomicNumber: 50, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p²', electrons: 50, category: 'post-transition metal'},
+        'Sb': {name: 'Antimony', atomicNumber: 51, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p³', electrons: 51, category: 'metalloid'},
+        'Te': {name: 'Tellurium', atomicNumber: 52, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁴', electrons: 52, category: 'metalloid'},
+        'I': {name: 'Iodine', atomicNumber: 53, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁵', electrons: 53, category: 'halogen'},
+        'Xe': {name: 'Xenon', atomicNumber: 54, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶', electrons: 54, category: 'noble gas'},
+        'Cs': {name: 'Cesium', atomicNumber: 55, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s¹', electrons: 55, category: 'alkali metal'},
+        'Ba': {name: 'Barium', atomicNumber: 56, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s²', electrons: 56, category: 'alkaline earth metal'},
+        'La': {name: 'Lanthanum', atomicNumber: 57, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 5d¹', electrons: 57, category: 'lanthanide'},
+        'Ce': {name: 'Cerium', atomicNumber: 58, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹ 5d¹', electrons: 58, category: 'lanthanide'},
+        'Pr': {name: 'Praseodymium', atomicNumber: 59, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f³', electrons: 59, category: 'lanthanide'},
+        'Nd': {name: 'Neodymium', atomicNumber: 60, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁴', electrons: 60, category: 'lanthanide'},
+        'Pm': {name: 'Promethium', atomicNumber: 61, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁵', electrons: 61, category: 'lanthanide'},
+        'Sm': {name: 'Samarium', atomicNumber: 62, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁶', electrons: 62, category: 'lanthanide'},
+        'Eu': {name: 'Europium', atomicNumber: 63, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁷', electrons: 63, category: 'lanthanide'},
+        'Gd': {name: 'Gadolinium', atomicNumber: 64, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁷ 5d¹', electrons: 64, category: 'lanthanide'},
+        'Tb': {name: 'Terbium', atomicNumber: 65, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f⁹', electrons: 65, category: 'lanthanide'},
+        'Dy': {name: 'Dysprosium', atomicNumber: 66, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁰', electrons: 66, category: 'lanthanide'},
+        'Ho': {name: 'Holmium', atomicNumber: 67, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹¹', electrons: 67, category: 'lanthanide'},
+        'Er': {name: 'Erbium', atomicNumber: 68, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹²', electrons: 68, category: 'lanthanide'},
+        'Tm': {name: 'Thulium', atomicNumber: 69, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹³', electrons: 69, category: 'lanthanide'},
+        'Yb': {name: 'Ytterbium', atomicNumber: 70, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴', electrons: 70, category: 'lanthanide'},
+        'Lu': {name: 'Lutetium', atomicNumber: 71, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹', electrons: 71, category: 'lanthanide'},
+        'Hf': {name: 'Hafnium', atomicNumber: 72, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d²', electrons: 72, category: 'transition metal'},
+        'Ta': {name: 'Tantalum', atomicNumber: 73, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d³', electrons: 73, category: 'transition metal'},
+        'W': {name: 'Tungsten', atomicNumber: 74, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d⁴', electrons: 74, category: 'transition metal'},
+        'Re': {name: 'Rhenium', atomicNumber: 75, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d⁵', electrons: 75, category: 'transition metal'},
+        'Os': {name: 'Osmium', atomicNumber: 76, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d⁶', electrons: 76, category: 'transition metal'},
+        'Ir': {name: 'Iridium', atomicNumber: 77, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d⁷', electrons: 77, category: 'transition metal'},
+        'Pt': {name: 'Platinum', atomicNumber: 78, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s¹ 4f¹⁴ 5d⁹', electrons: 78, category: 'transition metal'},
+        'Au': {name: 'Gold', atomicNumber: 79, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s¹ 4f¹⁴ 5d¹⁰', electrons: 79, category: 'transition metal'},
+        'Hg': {name: 'Mercury', atomicNumber: 80, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰', electrons: 80, category: 'transition metal'},
+        'Tl': {name: 'Thallium', atomicNumber: 81, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p¹', electrons: 81, category: 'post-transition metal'},
+        'Pb': {name: 'Lead', atomicNumber: 82, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p²', electrons: 82, category: 'post-transition metal'},
+        'Bi': {name: 'Bismuth', atomicNumber: 83, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p³', electrons: 83, category: 'post-transition metal'},
+        'Po': {name: 'Polonium', atomicNumber: 84, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁴', electrons: 84, category: 'metalloid'},
+        'At': {name: 'Astatine', atomicNumber: 85, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁵', electrons: 85, category: 'halogen'},
+        'Rn': {name: 'Radon', atomicNumber: 86, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶', electrons: 86, category: 'noble gas'},
+        'Fr': {name: 'Francium', atomicNumber: 87, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s¹', electrons: 87, category: 'alkali metal'},
+        'Ra': {name: 'Radium', atomicNumber: 88, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s²', electrons: 88, category: 'alkaline earth metal'},
+        'Ac': {name: 'Actinium', atomicNumber: 89, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 6d¹', electrons: 89, category: 'actinide'},
+        'Th': {name: 'Thorium', atomicNumber: 90, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 6d²', electrons: 90, category: 'actinide'},
+        'Pa': {name: 'Protactinium', atomicNumber: 91, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f² 6d¹', electrons: 91, category: 'actinide'},
+        'U': {name: 'Uranium', atomicNumber: 92, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f³ 6d¹', electrons: 92, category: 'actinide'},
+        'Np': {name: 'Neptunium', atomicNumber: 93, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f⁴ 6d¹', electrons: 93, category: 'actinide'},
+        'Pu': {name: 'Plutonium', atomicNumber: 94, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f⁶', electrons: 94, category: 'actinide'},
+        'Am': {name: 'Americium', atomicNumber: 95, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f⁷', electrons: 95, category: 'actinide'},
+        'Cm': {name: 'Curium', atomicNumber: 96, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f⁷ 6d¹', electrons: 96, category: 'actinide'},
+        'Bk': {name: 'Berkelium', atomicNumber: 97, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f⁹', electrons: 97, category: 'actinide'},
+        'Cf': {name: 'Californium', atomicNumber: 98, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁰', electrons: 98, category: 'actinide'},
+        'Es': {name: 'Einsteinium', atomicNumber: 99, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹¹', electrons: 99, category: 'actinide'},
+        'Fm': {name: 'Fermium', atomicNumber: 100, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹²', electrons: 100, category: 'actinide'},
+        'Md': {name: 'Mendelevium', atomicNumber: 101, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹³', electrons: 101, category: 'actinide'},
+        'No': {name: 'Nobelium', atomicNumber: 102, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴', electrons: 102, category: 'actinide'},
+        'Lr': {name: 'Lawrencium', atomicNumber: 103, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹', electrons: 103, category: 'actinide'},
+        'Rf': {name: 'Rutherfordium', atomicNumber: 104, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d²', electrons: 104, category: 'transition metal'},
+        'Db': {name: 'Dubnium', atomicNumber: 105, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d³', electrons: 105, category: 'transition metal'},
+        'Sg': {name: 'Seaborgium', atomicNumber: 106, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁴', electrons: 106, category: 'transition metal'},
+        'Bh': {name: 'Bohrium', atomicNumber: 107, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁵', electrons: 107, category: 'transition metal'},
+        'Hs': {name: 'Hassium', atomicNumber: 108, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁶', electrons: 108, category: 'transition metal'},
+        'Mt': {name: 'Meitnerium', atomicNumber: 109, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁷', electrons: 109, category: 'transition metal'},
+        'Ds': {name: 'Darmstadtium', atomicNumber: 110, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁸', electrons: 110, category: 'transition metal'},
+        'Rg': {name: 'Roentgenium', atomicNumber: 111, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d⁹', electrons: 111, category: 'transition metal'},
+        'Cn': {name: 'Copernicium', atomicNumber: 112, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰', electrons: 112, category: 'transition metal'},
+        'Nh': {name: 'Nihonium', atomicNumber: 113, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p¹', electrons: 113, category: 'post-transition metal'},
+        'Fl': {name: 'Flerovium', atomicNumber: 114, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p²', electrons: 114, category: 'post-transition metal'},
+        'Mc': {name: 'Moscovium', atomicNumber: 115, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p³', electrons: 115, category: 'post-transition metal'},
+        'Lv': {name: 'Livermorium', atomicNumber: 116, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p⁴', electrons: 116, category: 'post-transition metal'},
+        'Ts': {name: 'Tennessine', atomicNumber: 117, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p⁵', electrons: 117, category: 'halogen'},
+        'Og': {name: 'Oganesson', atomicNumber: 118, config: '1s² 2s² 2p⁶ 3s² 3p⁶ 4s² 3d¹⁰ 4p⁶ 5s² 4d¹⁰ 5p⁶ 6s² 4f¹⁴ 5d¹⁰ 6p⁶ 7s² 5f¹⁴ 6d¹⁰ 7p⁶', electrons: 118, category: 'noble gas'}
+    };
+
+    function searchElement() {
+        const input = document.getElementById('elementInput').value.trim();
+        if (!input) return;
+        
+        let element = null;
+        const searchKey = input.toLowerCase();
+        
+        if (elements[input]) {
+            element = elements[input];
+        }
+        else if (/^\d+$/.test(input)) {
+            const atomicNumber = parseInt(input);
+            element = Object.values(elements).find(e => e.atomicNumber === atomicNumber);
+        }
+        else {
+            element = Object.values(elements).find(e => e.name.toLowerCase().includes(searchKey));
+        }
+        
+        if (element) {
+            const elementSymbol = Object.keys(elements).find(k => elements[k] === element);
+            displayResult(element, elementSymbol);
+        } else {
+            document.getElementById('configDisplay').innerHTML = 'Element not found. Try "H", "Sodium", or "92"';
+            document.getElementById('elementInfo').innerHTML = '';
+        }
+    }
+
+    function displayResult(element, symbol) {
+        const config = element.config;
+        const blocks = config.split(' ');
+        const configHTML = blocks.map(block => {
+            const [orbital, electrons] = block.split(/(?=[¹²³⁴⁵⁶⁷⁸⁹⁰])/);
+            return `<span class="config-block">${orbital}<sup>${electrons || ''}</sup></span>`;
+        }).join(' ');
+        
+        document.getElementById('configDisplay').innerHTML = configHTML;
+        
+        document.getElementById('elementInfo').innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                <div><strong>Element:</strong> ${element.name} (${symbol})</div>
+                <div><strong>Atomic Number:</strong> ${element.atomicNumber}</div>
+                <div><strong>Total Electrons:</strong> ${element.electrons}</div>
+                <div><strong>Category:</strong> ${element.category}</div>
+            </div>
+        `;
+    }
+
+    function setExample(symbol) {
+        document.getElementById('elementInput').value = symbol;
+        searchElement();
+    }
+
+    document.getElementById('elementInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchElement();
+    });
+
+    setTimeout(() => {
+        document.getElementById('elementInput').value = 'Na';
+        searchElement();
+    }, 500);
+</script>
+</body>
+</html>
